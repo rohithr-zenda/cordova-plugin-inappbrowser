@@ -77,12 +77,4 @@
 
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary*) settings;
 
-// Custom options: Properties and methods
-@property (nonatomic, strong) IBOutlet UIToolbar* appHeader;
-- (void) showAppHeader: (BOOL) show;
-- (void) setAppHeader;
-@property (nonatomic, strong) IBOutlet UIToolbar* appFooter;
-- (void) showAppFooter: (BOOL) show;
-- (void) setAppFooter;
-
 @end

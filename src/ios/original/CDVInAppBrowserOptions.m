@@ -45,14 +45,6 @@
         self.toolbarcolor = nil;
         self.toolbartranslucent = YES;
         self.beforeload = @"";
-        
-        // Custom options
-        self.appheader = NO;
-        self.appheadernavbackbutton = NO;
-        self.appheaderclosebutton = NO;
-        self.appfooter = NO;
-        self.appfooterimageurl = nil;
-        self.appfooterlabel = nil;
     }
 
     return self;
