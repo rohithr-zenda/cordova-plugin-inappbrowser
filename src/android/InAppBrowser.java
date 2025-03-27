@@ -57,6 +57,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.DownloadListener;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -108,38 +109,41 @@ import android.graphics.drawable.shapes.RoundRectShape;
 @SuppressLint("SetJavaScriptEnabled")
 public class InAppBrowser extends CordovaPlugin {
 
-  private static final String NULL = "null";
-  protected static final String LOG_TAG = "InAppBrowser";
-  private static final String SELF = "_self";
-  private static final String SYSTEM = "_system";
-  private static final String EXIT_EVENT = "exit";
-  private static final String LOCATION = "location";
-  private static final String ZOOM = "zoom";
-  private static final String HIDDEN = "hidden";
-  private static final String LOAD_START_EVENT = "loadstart";
-  private static final String LOAD_STOP_EVENT = "loadstop";
-  private static final String LOAD_ERROR_EVENT = "loaderror";
-  private static final String MESSAGE_EVENT = "message";
-  private static final String CLEAR_ALL_CACHE = "clearcache";
-  private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
-  private static final String HARDWARE_BACK_BUTTON = "hardwareback";
-  private static final String MEDIA_PLAYBACK_REQUIRES_USER_ACTION = "mediaPlaybackRequiresUserAction";
-  private static final String SHOULD_PAUSE = "shouldPauseOnSuspend";
-  private static final Boolean DEFAULT_HARDWARE_BACK = true;
-  private static final String USER_WIDE_VIEW_PORT = "useWideViewPort";
-  private static final String TOOLBAR_COLOR = "toolbarcolor";
-  private static final String CLOSE_BUTTON_CAPTION = "closebuttoncaption";
-  private static final String CLOSE_BUTTON_COLOR = "closebuttoncolor";
-  private static final String LEFT_TO_RIGHT = "lefttoright";
-  private static final String HIDE_NAVIGATION = "hidenavigationbuttons";
-  private static final String NAVIGATION_COLOR = "navigationbuttoncolor";
-  private static final String HIDE_URL = "hideurlbar";
-  private static final String FOOTER = "footer";
-  private static final String FOOTER_COLOR = "footercolor";
-  private static final String BEFORELOAD = "beforeload";
-  private static final String FULLSCREEN = "fullscreen";
+    private static final String NULL = "null";
+    protected static final String LOG_TAG = "InAppBrowser";
+    private static final String SELF = "_self";
+    private static final String SYSTEM = "_system";
+    private static final String EXIT_EVENT = "exit";
+    private static final String LOCATION = "location";
+    private static final String ZOOM = "zoom";
+    private static final String HIDDEN = "hidden";
+    private static final String LOAD_START_EVENT = "loadstart";
+    private static final String LOAD_STOP_EVENT = "loadstop";
+    private static final String LOAD_ERROR_EVENT = "loaderror";
+    private static final String DOWNLOAD_EVENT = "download";
+    private static final String MESSAGE_EVENT = "message";
+    private static final String CLEAR_ALL_CACHE = "clearcache";
+    private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
+    private static final String HARDWARE_BACK_BUTTON = "hardwareback";
+    private static final String MEDIA_PLAYBACK_REQUIRES_USER_ACTION = "mediaPlaybackRequiresUserAction";
+    private static final String SHOULD_PAUSE = "shouldPauseOnSuspend";
+    private static final Boolean DEFAULT_HARDWARE_BACK = true;
+    private static final String USER_WIDE_VIEW_PORT = "useWideViewPort";
+    private static final String TOOLBAR_COLOR = "toolbarcolor";
+    private static final String CLOSE_BUTTON_CAPTION = "closebuttoncaption";
+    private static final String CLOSE_BUTTON_COLOR = "closebuttoncolor";
+    private static final String LEFT_TO_RIGHT = "lefttoright";
+    private static final String HIDE_NAVIGATION = "hidenavigationbuttons";
+    private static final String NAVIGATION_COLOR = "navigationbuttoncolor";
+    private static final String HIDE_URL = "hideurlbar";
+    private static final String FOOTER = "footer";
+    private static final String FOOTER_COLOR = "footercolor";
+    private static final String BEFORELOAD = "beforeload";
+    private static final String FULLSCREEN = "fullscreen";
 
-  private static final List customizableOptions = Arrays.asList(CLOSE_BUTTON_CAPTION, TOOLBAR_COLOR, NAVIGATION_COLOR, CLOSE_BUTTON_COLOR, FOOTER_COLOR);
+    private static final int TOOLBAR_HEIGHT = 48;
+
+    private static final List customizableOptions = Arrays.asList(CLOSE_BUTTON_CAPTION, TOOLBAR_COLOR, NAVIGATION_COLOR, CLOSE_BUTTON_COLOR, FOOTER_COLOR);
 
   private InAppBrowserDialog dialog;
   private WebView inAppWebView;
@@ -224,6 +228,27 @@ public class InAppBrowser extends CordovaPlugin {
               } catch (InvocationTargetException e) {
                 LOG.d(LOG_TAG, e.getLocalizedMessage());
               }
+            }
+            final String url = args.getString(0);
+            this.cordova.getActivity().runOnUiThread(new Runnable() {
+                @SuppressLint("NewApi")
+                @Override
+                public void run() {
+                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) {
+                        currentClient.waitForBeforeload = false;
+                        inAppWebView.setWebViewClient(currentClient);
+                    } else {
+                        ((InAppBrowserClient)inAppWebView.getWebViewClient()).waitForBeforeload = false;
+                    }
+                    inAppWebView.loadUrl(url);
+
+                }
+            });
+        }
+        else if (action.equals("injectScriptCode")) {
+            String jsWrapper = null;
+            if (args.getBoolean(1)) {
+                jsWrapper = String.format("(function(){prompt(JSON.stringify([eval(%%s)]), 'gap-iab://%s')})()", callbackContext.getCallbackId());
             }
             if (shouldAllowNavigation == null) {
               try {
